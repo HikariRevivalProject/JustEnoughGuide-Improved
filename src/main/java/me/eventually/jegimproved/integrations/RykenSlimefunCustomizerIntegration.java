@@ -36,7 +36,7 @@ public class RykenSlimefunCustomizerIntegration extends AbstractIntegration {
      * Get the appendages that should be applied to the lore.
      */
     @Override
-    public void getAppendages(Player p, SlimefunItem item, List<String> lore) {
+    public void applyAppendages(Player p, SlimefunItem item, List<String> lore) {
         Class<?> clazz = item.getClass();
         boolean isRSCGenerator = (
                 clazz.getSimpleName().equals("CustomMaterialGenerator")
@@ -63,7 +63,7 @@ public class RykenSlimefunCustomizerIntegration extends AbstractIntegration {
             for (ItemStack generation : generationList){
                 String itemName = ItemStackHelper.getDisplayName(generation);
                 long amount = generation.getAmount() * estimateGenerations;
-                lore.add("§d" + itemName + " §b" + amount + " §d个");
+                lore.add("§d每" + estimateUnit + " §7生成 §d" + itemName + " §7" + amount + " 个");
             }
         }
     }

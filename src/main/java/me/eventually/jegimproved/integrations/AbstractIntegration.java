@@ -13,5 +13,5 @@ public abstract class AbstractIntegration {
     /**
      * Get the appendages that should be applied to the lore.
      */
-    public abstract void getAppendages(Player p, SlimefunItem item, List<String> lore);
+    public abstract void applyAppendages(Player p, SlimefunItem item, List<String> lore);
 }
