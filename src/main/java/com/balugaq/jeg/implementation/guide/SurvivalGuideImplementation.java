@@ -11,11 +11,7 @@ import com.balugaq.jeg.api.objects.events.RTSEvents;
 import com.balugaq.jeg.core.listeners.GuideListener;
 import com.balugaq.jeg.core.listeners.RTSListener;
 import com.balugaq.jeg.implementation.JustEnoughGuide;
-import com.balugaq.jeg.utils.GuideUtil;
-import com.balugaq.jeg.utils.ItemStackUtil;
-import com.balugaq.jeg.utils.LocalHelper;
-import com.balugaq.jeg.utils.Models;
-import com.balugaq.jeg.utils.SpecialMenuProvider;
+import com.balugaq.jeg.utils.*;
 import com.balugaq.jeg.utils.clickhandler.BeginnerUtils;
 import com.balugaq.jeg.utils.clickhandler.GroupLinker;
 import com.balugaq.jeg.utils.compatibility.Converter;
@@ -23,11 +19,7 @@ import io.github.thebusybiscuit.slimefun4.api.SlimefunAddon;
 import io.github.thebusybiscuit.slimefun4.api.events.PlayerPreResearchEvent;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
-import io.github.thebusybiscuit.slimefun4.api.items.groups.FlexItemGroup;
-import io.github.thebusybiscuit.slimefun4.api.items.groups.LockedItemGroup;
-import io.github.thebusybiscuit.slimefun4.api.items.groups.NestedItemGroup;
-import io.github.thebusybiscuit.slimefun4.api.items.groups.SeasonalItemGroup;
-import io.github.thebusybiscuit.slimefun4.api.items.groups.SubItemGroup;
+import io.github.thebusybiscuit.slimefun4.api.items.groups.*;
 import io.github.thebusybiscuit.slimefun4.api.player.PlayerProfile;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.api.researches.Research;
@@ -49,15 +41,14 @@ import io.github.thebusybiscuit.slimefun4.libraries.dough.recipes.MinecraftRecip
 import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.SlimefunGuideItem;
+import me.eventually.jegimproved.exceptions.CalculatorOverflow;
 import me.eventually.jegimproved.process.DetailShowingProcess;
+import me.eventually.jegimproved.utils.CalculatorUtil;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu.MenuClickHandler;
+import net.guizhanss.guizhanlib.minecraft.helper.inventory.ItemStackHelper;
 import net.wesjd.anvilgui.AnvilGUI;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.Tag;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
@@ -69,6 +60,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -96,6 +88,7 @@ public class SurvivalGuideImplementation extends SurvivalSlimefunGuide implement
             new Pair<>("小时", 1000L * 60 * 60),
             new Pair<>("天", 1000L * 60 * 60 * 24)
     );
+    private static final List<Integer> CALCULATOR_BACKGROUND_SLOTS = List.of(47, 51, 53);
 
     private final int[] recipeSlots = {3, 4, 5, 12, 13, 14, 21, 22, 23};
     private final @NotNull ItemStack item;
@@ -481,7 +474,8 @@ public class SurvivalGuideImplementation extends SurvivalSlimefunGuide implement
                 try {
                     if (isSurvivalMode()) {
                         if (action.isRightClicked()){
-                            // TODO: impl calculator
+                            profile.getGuideHistory().add(itemGroup, page);
+                            openCalculator(profile, sfitem, BigInteger.ONE, 1);
                         }else{
                             displayItem(profile, sfitem, true);
                         }
@@ -1153,5 +1147,94 @@ public class SurvivalGuideImplementation extends SurvivalSlimefunGuide implement
             return;
         }
         GuideUtil.removeLastEntry(profile.getGuideHistory());
+    }
+
+    public void openCalculator(PlayerProfile profile, SlimefunItem item, BigInteger amount, int page) {
+        Player p = profile.getPlayer();
+        if (p == null) return;
+        if (item == null) return;
+
+        ChestMenu menu = new ChestMenu(ChatColor.DARK_GRAY + "材料计算器 - " + ItemStackHelper.getDisplayName(item.getItem()));
+        menu.setEmptySlotsClickable(false);
+        Map<ItemStack, BigInteger> map;
+        try{
+            map = CalculatorUtil.calculateRecipe(item, amount);
+        } catch (CalculatorOverflow ex) {
+            p.sendMessage(ChatColor.DARK_RED + "计算" + ex.getMessage() + "的配方发生溢出,本次计算已终止.");
+            return;
+        } catch (Exception e) {
+            return;
+        }
+        map.entrySet().removeIf(entry -> entry.getValue().compareTo(BigInteger.ZERO) <= 0);
+        if (map.isEmpty()) {
+            p.sendMessage(ChatColor.DARK_RED + "没有找到任何配方.");
+            return;
+        }
+
+        int pageSize = 45;
+        List<Map.Entry<ItemStack, BigInteger>> entries = new ArrayList<>(map.entrySet());
+        List<Map<ItemStack, BigInteger>> pages = new ArrayList<>();
+        for (int i = 0; i < map.size(); i += pageSize) {
+            int end = Math.min(i + pageSize, map.size());
+            Map<ItemStack, BigInteger> subMap = new HashMap<>();
+            for (int j = i; j < end; j++) {
+                Map.Entry<ItemStack, BigInteger> entry = entries.get(j);
+                subMap.put(entry.getKey(), entry.getValue());
+            }
+            pages.add(subMap);
+        }
+        if (pages.isEmpty()) {
+            p.sendMessage(ChatColor.DARK_RED + "没有找到任何配方.");
+            return;
+        }
+        ItemStack clean = ItemStackUtil.getCleanItem(item.getItem());
+        ItemMeta meta = clean.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(meta.getDisplayName() + " §7x" + amount);
+        }
+        clean.setItemMeta(meta);
+        menu.addItem(49, clean, ChestMenuUtils.getEmptyClickHandler());
+        menu.addItem(50, Converter.getItem(Material.SLIME_BLOCK, "§c数量+1"), (pl, slot, itemstack, action) -> {
+            if (amount.compareTo(BigInteger.valueOf(item.getItem().getMaxStackSize())) == 0) return false;
+            openCalculator(profile, item, amount.add(BigInteger.ONE), page);
+            return false;
+        });
+        menu.addItem(48, Converter.getItem(Material.HONEY_BLOCK, "§c数量-1"), (pl, slot, itemstack, action) -> {
+            if (amount.compareTo(BigInteger.ONE) == 0) return false;
+            openCalculator(profile, item, amount.add(BigInteger.ONE.negate()), page);
+            return false;
+        });
+        addBackButton(menu, 45, p, profile);
+        menu.addItem(46, ChestMenuUtils.getPreviousButton(p, page, pages.size()), (pl, slot, itemstack, action) -> {
+            if (page == 1) return false;
+            openCalculator(profile, item, amount, page - 1);
+            return false;
+        });
+        menu.addItem(52, ChestMenuUtils.getNextButton(p, page, pages.size()), (pl, slot, itemstack, action) -> {
+            if (page == pages.size()) return false;
+            openCalculator(profile, item, amount, page + 1);
+            return false;
+        });
+        for (int i : CALCULATOR_BACKGROUND_SLOTS) {
+            menu.addItem(i, ItemStackUtil.getCleanItem(ChestMenuUtils.getBackground()), ChestMenuUtils.getEmptyClickHandler());
+        }
+        Map<ItemStack, BigInteger> pageItems = pages.get(page - 1);
+        int index = 0;
+        for (Map.Entry<ItemStack, BigInteger> entry : pageItems.entrySet()) {
+            int maxStackSize = entry.getKey().getMaxStackSize();
+            BigInteger[] result = entry.getValue().divideAndRemainder(BigInteger.valueOf(maxStackSize));
+            BigInteger stacks = result[0];
+            BigInteger mod = result[1];
+            ItemStack itemStack = Converter.getItem(entry.getKey(), ItemStackHelper.getDisplayName(entry.getKey()),
+                    "§e数量: §b" + entry.getValue(),
+                    "§eStack: §b" + stacks + " §7x §b" + maxStackSize + (mod.compareTo(BigInteger.ZERO) > 0 ? " §7+ §b" + mod : "")
+            );
+            menu.addItem(index, itemStack, (pl, slot, itemstack, action) -> {
+                openCalculator(profile, SlimefunItem.getByItem(entry.getKey()), entry.getValue(), 1);
+                return false;
+            });
+            index++;
+        }
+        menu.open(p);
     }
 }
