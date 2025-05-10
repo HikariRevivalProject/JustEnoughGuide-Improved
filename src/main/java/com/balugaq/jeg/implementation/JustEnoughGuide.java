@@ -1,15 +1,11 @@
 package com.balugaq.jeg.implementation;
 
-import com.balugaq.jeg.core.managers.BookmarkManager;
-import com.balugaq.jeg.core.managers.CommandManager;
-import com.balugaq.jeg.core.managers.ConfigManager;
-import com.balugaq.jeg.core.managers.IntegrationManager;
-import com.balugaq.jeg.core.managers.ListenerManager;
-import com.balugaq.jeg.core.managers.RTSBackpackManager;
+import com.balugaq.jeg.core.managers.*;
 import com.balugaq.jeg.implementation.guide.CheatGuideImplementation;
 import com.balugaq.jeg.implementation.guide.SurvivalGuideImplementation;
 import com.balugaq.jeg.implementation.items.GroupSetup;
 import com.balugaq.jeg.implementation.option.BeginnersGuideOption;
+import com.balugaq.jeg.implementation.option.ProductionEstimateOption;
 import com.balugaq.jeg.utils.MinecraftVersion;
 import com.balugaq.jeg.utils.ReflectionUtil;
 import com.balugaq.jeg.utils.UUIDUtils;
@@ -190,6 +186,11 @@ public class JustEnoughGuide extends JavaPlugin implements SlimefunAddon {
                 getLogger().info("正在加载新手指南选项...");
                 SlimefunGuideSettings.addOption(new BeginnersGuideOption());
                 getLogger().info("新手指南选项加载完毕！");
+            }
+            if (getConfigManager().enabledRSCIntegration()) {
+                getLogger().info("正在加载产量预测选项...");
+                SlimefunGuideSettings.addOption(ProductionEstimateOption.getInstance());
+                getLogger().info("产量预测选项加载完毕！");
             }
         }
 

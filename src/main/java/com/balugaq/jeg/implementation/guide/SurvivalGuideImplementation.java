@@ -43,11 +43,13 @@ import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.implementation.guide.SurvivalSlimefunGuide;
 import io.github.thebusybiscuit.slimefun4.implementation.tasks.AsyncRecipeChoiceTask;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.chat.ChatInput;
+import io.github.thebusybiscuit.slimefun4.libraries.dough.collections.Pair;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.items.ItemUtils;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.recipes.MinecraftRecipe;
 import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import io.github.thebusybiscuit.slimefun4.utils.itemstack.SlimefunGuideItem;
+import me.eventually.jegimproved.process.DetailShowingProcess;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
 import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu.MenuClickHandler;
 import net.wesjd.anvilgui.AnvilGUI;
@@ -67,11 +69,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Level;
 
 /**
@@ -93,6 +91,11 @@ public class SurvivalGuideImplementation extends SurvivalSlimefunGuide implement
     private static final int MAX_ITEM_GROUPS = 36;
     private static final int SPECIAL_MENU_SLOT = 26;
     private static final ItemStack SPECIAL_MENU_ITEM = Models.SPECIAL_MENU_ITEM;
+    public static final List<Pair<String, Long>> timeDurations = Arrays.asList(
+            new Pair<>("分钟", 1000L * 60),
+            new Pair<>("小时", 1000L * 60 * 60),
+            new Pair<>("天", 1000L * 60 * 60 * 24)
+    );
 
     private final int[] recipeSlots = {3, 4, 5, 12, 13, 14, 21, 22, 23};
     private final @NotNull ItemStack item;
@@ -473,11 +476,16 @@ public class SurvivalGuideImplementation extends SurvivalSlimefunGuide implement
                 return false;
             });
         } else {
-            menu.addItem(index, ItemStackUtil.getCleanItem(sfitem.getItem()));
+            showItem(profile, menu, sfitem, index);
             menu.addMenuClickHandler(index, (pl, slot, item, action) -> {
                 try {
                     if (isSurvivalMode()) {
-                        displayItem(profile, sfitem, true);
+                        if (action.isRightClicked()){
+                            // TODO: impl calculator
+                        }else{
+                            displayItem(profile, sfitem, true);
+                        }
+
                     } else if (pl.isOp() || pl.hasPermission("slimefun.cheat.items")) {
                         if (sfitem instanceof MultiBlockMachine) {
                             Slimefun.getLocalization().sendMessage(pl, "guide.cheat.no-multiblocks");
@@ -506,6 +514,24 @@ public class SurvivalGuideImplementation extends SurvivalSlimefunGuide implement
             });
             BeginnerUtils.applyBeginnersGuide(this, menu, index);
         }
+    }
+
+    private void showItem(@NotNull PlayerProfile profile, @NotNull ChestMenu menu, @NotNull SlimefunItem sfItem, int index) {
+        List<String> lore = new ArrayList<>();
+        ItemStack cleaned = ItemStackUtil.getCleanItem(sfItem.getItem());
+        ItemMeta itemMeta = cleaned.getItemMeta();
+        if (itemMeta != null) {
+            lore.addAll(itemMeta.getLore() == null ? Collections.emptyList() : itemMeta.getLore());
+            lore.add("§e== JustEnoughGuide ==");
+            lore.add("§6左键: 查看配方");
+            lore.add("§6右键: 查看材料预览");
+
+            DetailShowingProcess.appendDetail(profile, sfItem, lore);
+
+            itemMeta.setLore(lore);
+            cleaned.setItemMeta(itemMeta);
+        }
+        menu.addItem(index, cleaned);
     }
 
     @Override

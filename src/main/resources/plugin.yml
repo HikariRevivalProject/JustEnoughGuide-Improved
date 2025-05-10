@@ -1,8 +1,8 @@
-name: JustEnoughGuide
-author: balugaq
+name: JustEnoughGuide-Improved
+author: [balugaq, Eventually]
 description: This is a Slimefun addon and improved the guide.
 main: com.balugaq.jeg.implementation.JustEnoughGuide
-website: https://github.com/balugaq/JustEnoughGuide
+website: https://github.com/HikariRevivalProject/JustEnoughGuide-Improved
 version: ${project.version}
 api-version: 1.17
 depend:
@@ -10,6 +10,9 @@ depend:
   - GuizhanLibPlugin
 softdepend:
   - LogiTech
+  - EMCTech
+  - RykenSlimefunCustomizer
+  - FinalTECH-Changed
 commands:
   justenoughguide:
     aliases:

@@ -36,6 +36,9 @@ public class ConfigManager extends AbstractManager {
     private final boolean BOOKMARK;
     private final boolean RTS_SEARCH;
     private final boolean BEGINNER_OPTION;
+    private final boolean INTEGRATION_RYKENSLIMEFUNCUSTOMIZER;
+    private final boolean INTEGRATION_EMCTECH;
+    private final boolean INTEGRATION_FINALTECHCHANGED;
     private final @NotNull String SURVIVAL_GUIDE_TITLE;
     private final @NotNull String CHEAT_GUIDE_TITLE;
     private final @NotNull JavaPlugin plugin;
@@ -53,6 +56,10 @@ public class ConfigManager extends AbstractManager {
         this.CHEAT_GUIDE_TITLE = plugin.getConfig().getString("guide.cheat-guide-title", "&c&lSlimefun 指南 (作弊模式)         &e&l爱来自 JustEnoughGuide");
         this.RTS_SEARCH = plugin.getConfig().getBoolean("improvements.rts-search", true);
         this.BEGINNER_OPTION = plugin.getConfig().getBoolean("improvements.beginner-option", true);
+
+        this.INTEGRATION_RYKENSLIMEFUNCUSTOMIZER = plugin.getConfig().getBoolean("integration.ryken-slimefun-customizer", true);
+        this.INTEGRATION_EMCTECH = plugin.getConfig().getBoolean("integration.emc-tech", true);
+        this.INTEGRATION_FINALTECHCHANGED = plugin.getConfig().getBoolean("integration.final-tech-changed", true);
     }
 
     private void setupDefaultConfig() {
@@ -118,6 +125,18 @@ public class ConfigManager extends AbstractManager {
 
     public boolean isBeginnerOption() {
         return BEGINNER_OPTION;
+    }
+
+    public boolean enabledRSCIntegration() {
+        return INTEGRATION_RYKENSLIMEFUNCUSTOMIZER;
+    }
+
+    public boolean enabledEMCIntegration() {
+        return INTEGRATION_EMCTECH;
+    }
+
+    public boolean enabledFTCIntegration() {
+        return INTEGRATION_FINALTECHCHANGED;
     }
 
     public @NotNull String getSurvivalGuideTitle() {

@@ -13,6 +13,12 @@ improvements:
   rts-search: true
   beginner-option: true
 
+# Toggle integrations that causes lore appending.
+integrations:
+  ryken-slimefun-customizer: true #  Ryken Slimefun Customizer (Estimate Material Generator Production Count)
+  emc-tech: true #  EMC Tech (Show EMC Value)
+  final-tech-changed: true #  Final Tech (Show Item Value in Equivalent Exchange Table.)
+
 # Do not change this value unless you know what you are doing.
 config-version: 1.5
 
